@@ -24,13 +24,15 @@ app.all('*', function (req, res, next) {
             res.status(500).send({ error: 'There is no Target-Endpoint header in the request' });
             return;
         }
-        request({ url: targetURL + req.url, method: req.method, json: req.body, headers: {'Authorization': req.header('Authorization')} },
-            function (error, response, body) {
-                if (error) {
-                    console.error('error: ' + response.statusCode)
-                }
-                // You might want to log or process the response body here
-            }).pipe(res);
+        // Inside the request callback
+request({ url: targetURL + req.url, method: req.method, json: req.body, headers: {'Authorization': req.header('Authorization')} },
+    function (error, response, body) {
+        if (error) {
+            console.error('error: ' + response.statusCode);
+        }
+        // Log the body received from Pinterest
+        console.log(body);
+    }).pipe(res);
     }
 });
 
