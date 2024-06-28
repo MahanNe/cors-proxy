@@ -21,7 +21,7 @@ app.all('*', function (req, res, next) {
     } else {
         var targetURL = req.header('Target-URL'); // Target-URL ie. https://example.com or http://example.com
         if (!targetURL) {
-            res.send(500, { error: 'There is no Target-Endpoint header in the request' });
+            res.status(500).send({ error: 'There is no Target-Endpoint header in the request' });
             return;
         }
         request({ url: targetURL + req.url, method: req.method, json: req.body, headers: {'Authorization': req.header('Authorization')} },
@@ -29,7 +29,7 @@ app.all('*', function (req, res, next) {
                 if (error) {
                     console.error('error: ' + response.statusCode)
                 }
-//                console.log(body);
+                // You might want to log or process the response body here
             }).pipe(res);
     }
 });
