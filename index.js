@@ -8,32 +8,22 @@ console.log('Using limit: ', myLimit);
 
 app.use(bodyParser.json({limit: myLimit}));
 
+// Inside your server-side proxy code
 app.all('*', function (req, res, next) {
+    var targetURL = req.header('Target-URL');
+    console.log('Request received for:', targetURL);
 
-    // Set CORS headers: allow all origins, methods, and headers: you may want to lock this down in a production environment
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET, PUT, PATCH, POST, DELETE");
-    res.header("Access-Control-Allow-Headers", req.header('access-control-request-headers'));
+    request({ url: targetURL + req.url, method: req.method, json: req.body, headers: {'Authorization': req.header('Authorization')} },
+        function (error, response, body) {
+            if (error) {
+                console.error('Error:', error);
+                res.status(500).send({ error: 'Error proxying request' });
+                return;
+            }
 
-    if (req.method === 'OPTIONS') {
-        // CORS Preflight
-        res.send();
-    } else {
-        var targetURL = req.header('Target-URL'); // Target-URL ie. https://example.com or http://example.com
-        if (!targetURL) {
-            res.status(500).send({ error: 'There is no Target-Endpoint header in the request' });
-            return;
-        }
-        // Inside the request callback
-request({ url: targetURL + req.url, method: req.method, json: req.body, headers: {'Authorization': req.header('Authorization')} },
-    function (error, response, body) {
-        if (error) {
-            console.error('error: ' + response.statusCode);
-        }
-        // Log the body received from Pinterest
-        console.log(body);
-    }).pipe(res);
-    }
+            console.log('Response from Pinterest:', body);
+            res.send(body); // Send the response from Pinterest back to the client
+        });
 });
 
 app.set('port', process.env.PORT || 3000);
