@@ -1,13 +1,17 @@
 {
   "name": "cors-proxy",
   "version": "1.0.0",
-  "description": "CORS Proxy",
+  "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+  "start": "node index.js"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "cors-anywhere": "^0.4.4",
-    "express": "^4.19.2"
+    "body-parser": "^1.20.2",
+    "express": "^4.19.2",
+    "request": "^2.88.2"
   }
 }
