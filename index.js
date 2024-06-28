@@ -11,18 +11,21 @@ app.use(bodyParser.json({limit: myLimit}));
 // Inside your server-side proxy code
 app.all('*', function (req, res, next) {
     var targetURL = req.header('Target-URL');
-    console.log('Request received for:', targetURL);
+    if (!targetURL) {
+        res.status(400).send({ error: 'Missing Target-URL header in the request' });
+        return;
+    }
 
-    request({ url: targetURL + req.url, method: req.method, json: req.body, headers: {'Authorization': req.header('Authorization')} },
+    request({ url: targetURL, method: req.method, json: req.body, headers: {'Authorization': req.header('Authorization')} },
         function (error, response, body) {
             if (error) {
-                console.error('Error:', error);
+                console.error('Error proxying request:', error);
                 res.status(500).send({ error: 'Error proxying request' });
                 return;
             }
 
-            console.log('Response from Pinterest:', body);
-            res.send(body); // Send the response from Pinterest back to the client
+            // Forward the response from Pinterest back to the client
+            res.send(body);
         });
 });
 
