@@ -1,36 +1,42 @@
-var express = require('express'),
-    request = require('request'),
-    bodyParser = require('body-parser'),
-    app = express();
+const express = require('express');
+const axios = require('axios');
+const app = express();
 
-var myLimit = typeof(process.argv[2]) != 'undefined' ? process.argv[2] : '100kb';
-console.log('Using limit: ', myLimit);
+// Middleware to parse JSON bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use(bodyParser.json({limit: myLimit}));
-
-// Inside your server-side proxy code
-app.all('*', function (req, res, next) {
-    var targetURL = req.header('Target-URL');
-    if (!targetURL) {
-        res.status(400).send({ error: 'Missing Target-URL header in the request' });
-        return;
+// Route for handling Pinterest proxy requests
+app.get('/api/proxy', async (req, res) => {
+    const url = req.query.url;
+    if (!url) {
+        return res.status(400).send('URL parameter is required');
     }
 
-    request({ url: targetURL, method: req.method, json: req.body, headers: {'Authorization': req.header('Authorization')} },
-        function (error, response, body) {
-            if (error) {
-                console.error('Error proxying request:', error);
-                res.status(500).send({ error: 'Error proxying request' });
-                return;
-            }
-
-            // Forward the response from Pinterest back to the client
-            res.send(body);
+    try {
+        const response = await axios({
+            url,
+            method: 'GET',
+            responseType: 'stream'
         });
+
+        // Set headers based on response from Pinterest
+        res.setHeader('Content-Type', response.headers['content-type']);
+        
+        // Pipe the response stream from Pinterest to the client response
+        response.data.pipe(res);
+    } catch (error) {
+        console.error('Error proxying request:', error.message);
+        if (error.response) {
+            console.error('Status:', error.response.status);
+            console.error('Data:', error.response.data);
+        }
+        res.status(500).send('Error proxying request');
+    }
 });
 
-app.set('port', process.env.PORT || 3000);
-
-app.listen(app.get('port'), function () {
-    console.log('Proxy server listening on port ' + app.get('port'));
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
