@@ -1,32 +1,25 @@
 const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
+const corsAnywhere = require('cors-anywhere');
+const path = require('path');
+
 const app = express();
+const port = process.env.PORT || 3000;
 
-app.use(cors()); // Enable CORS for all routes
+// Serve static files (your HTML/CSS/JS)
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/api/proxy', async (req, res) => {
-    const url = req.query.url;
-    if (!url) {
-        return res.status(400).send('URL parameter is required');
-    }
-
-    try {
-        const response = await axios({
-            url,
-            method: 'GET',
-            responseType: 'stream'
-        });
-
-        res.setHeader('Content-Type', response.headers['content-type']);
-        response.data.pipe(res);
-    } catch (error) {
-        console.error('Error proxying request:', error.message);
-        res.status(500).send('Error proxying request');
-    }
+// Set up the CORS Anywhere proxy
+const corsProxy = corsAnywhere.createServer({
+    originWhitelist: [], // Allow all origins
+    requireHeader: ['origin', 'x-requested-with'],
+    removeHeaders: ['cookie', 'cookie2']
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.use('/proxy', (req, res) => {
+    req.url = req.url.replace('/proxy/', '/');
+    corsProxy.emit('request', req, res);
+});
+
+app.listen(port, () => {
+    console.log(`CORS Proxy server running on port ${port}`);
 });
