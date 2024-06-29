@@ -1,12 +1,10 @@
 const express = require('express');
+const cors = require('cors');
 const axios = require('axios');
 const app = express();
 
-// Middleware to parse JSON bodies
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors()); // Enable CORS for all routes
 
-// Route for handling Pinterest proxy requests
 app.get('/api/proxy', async (req, res) => {
     const url = req.query.url;
     if (!url) {
@@ -20,22 +18,14 @@ app.get('/api/proxy', async (req, res) => {
             responseType: 'stream'
         });
 
-        // Set headers based on response from Pinterest
         res.setHeader('Content-Type', response.headers['content-type']);
-        
-        // Pipe the response stream from Pinterest to the client response
         response.data.pipe(res);
     } catch (error) {
         console.error('Error proxying request:', error.message);
-        if (error.response) {
-            console.error('Status:', error.response.status);
-            console.error('Data:', error.response.data);
-        }
         res.status(500).send('Error proxying request');
     }
 });
 
-// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
