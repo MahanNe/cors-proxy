@@ -3,7 +3,7 @@ const corsAnywhere = require('cors-anywhere');
 const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5500;
 
 // Serve static files (your HTML/CSS/JS)
 app.use(express.static(path.join(__dirname, 'public')));
